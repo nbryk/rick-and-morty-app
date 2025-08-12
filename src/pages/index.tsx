@@ -9,6 +9,8 @@ import { FormEvent } from "react";
 
 import { useDebounce } from "use-debounce";
 
+import styles from "@/styles/Home.module.css";
+
 // Типизація персонажа залишається такою ж
 interface Character {
   id: number;
@@ -28,68 +30,286 @@ interface HomeProps {
   characters: Character[];
   info: Info; // Додаємо інформацію про пагінацію
   hasError?: boolean;
+  locations: string[];
 }
 
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const { query } = context;
+
+//   const nameQuery = query.name || "";
+//   const pageQuery = query.page || "1";
+//   const statusQuery = query.status || "";
+//   const genderQuery = query.gender || "";
+//   const locationQuery = query.location || "";
+
+//   const locationsRes = await fetch("https://rickandmortyapi.com/api/location");
+//   const locationsData = await locationsRes.json();
+//   const locations = locationsData.results.map(
+//     (loc: { name: string }) => loc.name
+//   );
+
+//   if (locationQuery) {
+//     const locationRes = await fetch(
+//       `https://rickandmortyapi.com/api/location/?name=${locationQuery}`
+//     );
+
+//     const locationData = await locationRes.json();
+
+//     if (locationData.results && locationData.results.length > 0) {
+//       const residentsUrls = locationData.results[0].residents;
+//       // const ids = residentsUrls
+//       //   .map((url: string) => url.split("/").pop())
+//       //   .slice(0, 20); // перші 20 персонажів
+
+//       const ids = residentsUrls
+//         .map((url: string) => url.split("/").pop())
+//         .slice(0);
+
+//       const charactersRes = await fetch(
+//         `https://rickandmortyapi.com/api/character/${ids.join(",")}`
+//       );
+
+//       const charactersData = await charactersRes.json();
+
+//       let filteredCharacters = Array.isArray(charactersData)
+//         ? charactersData
+//         : [charactersData];
+
+//       // 🔍 Фільтрація за ім'ям
+//       if (nameQuery) {
+//         filteredCharacters = filteredCharacters.filter((char) =>
+//           char.name.toLowerCase().includes((nameQuery as string).toLowerCase())
+//         );
+//       }
+
+//       // 🔍 Фільтрація за статусом
+//       if (statusQuery) {
+//         filteredCharacters = filteredCharacters.filter(
+//           (char) =>
+//             char.status.toLowerCase() === (statusQuery as string).toLowerCase()
+//         );
+//       }
+
+//       // 🔍 Фільтрація за гендером
+//       if (genderQuery) {
+//         filteredCharacters = filteredCharacters.filter(
+//           (char) =>
+//             char.gender.toLowerCase() === (genderQuery as string).toLowerCase()
+//         );
+//       }
+
+//       return {
+//         props: {
+//           characters: filteredCharacters,
+//           info: { prev: null, next: null, pages: 1 },
+//           locations,
+//         },
+//       };
+//     } else {
+//       return {
+//         props: {
+//           characters: [],
+//           info: { prev: null, next: null, pages: 1 },
+//           locations,
+//           hasError: false,
+//         },
+//       };
+//     }
+//   }
+
+//   try {
+//     const res = await fetch(
+//       `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}&gender=${genderQuery}`
+//     );
+
+//     // Запит для локацій
+//     // const locationsRes = await fetch(
+//     //   "https://rickandmortyapi.com/api/location"
+//     // );
+
+//     if (!res.ok) {
+//       if (res.status === 404) {
+//         return {
+//           props: {
+//             characters: [],
+//             hasError: false,
+//             info: { prev: null, next: null, pages: 1 },
+//             locations: [],
+//           },
+//         };
+//       }
+//       throw new Error(`HTTP error! status: ${res.status}`);
+//     }
+
+//     const data = await res.json();
+//     //const locationsData = await locationsRes.json();
+
+//     // Витягуємо назви локацій та перетворюємо в масив рядків
+//     // const locations = locationsData.results.map(
+//     //   (loc: { name: string }) => loc.name
+//     // );
+
+//     return {
+//       props: {
+//         characters: data.results || [],
+//         info: data.info || { prev: null, next: null, pages: 1 },
+//         locations: locations,
+//       },
+//     };
+//   } catch (error) {
+//     console.error("Error loading characters:", error);
+
+//     return {
+//       props: {
+//         characters: [],
+//         hasError: true,
+//         info: { prev: null, next: null, pages: 1 },
+//         locations: [],
+//       },
+//     };
+//   }
+// }
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
+
   const nameQuery = query.name || "";
-
   const pageQuery = query.page || "1";
-
   const statusQuery = query.status || "";
+  const genderQuery = query.gender || "";
+  const locationQuery = query.location || "";
+
+  // ... (запит на локації без змін) ...
+  const locationsRes = await fetch("https://rickandmortyapi.com/api/location");
+  const locationsData = await locationsRes.json();
+  const locations = locationsData.results.map(
+    (loc: { name: string }) => loc.name
+  );
+
+  let characters: Character[] = [];
+  let info: Info = { prev: null, next: null, pages: 1 };
+  let hasError = false;
 
   try {
-    const res = await fetch(
-      `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}`
-    );
+    if (locationQuery) {
+      const locationRes = await fetch(
+        `https://rickandmortyapi.com/api/location/?name=${locationQuery}`
+      );
+      const locationData = await locationRes.json();
 
-    if (!res.ok) {
-      // Якщо запит завершився з помилкою (наприклад, сторінки не існує),
-      // ми можемо відловити це тут
-      if (res.status === 404) {
-        return {
-          props: {
-            characters: [],
-            hasError: false,
-            // Додатково передамо інформацію про пагінацію
-            info: { prev: null, next: null, pages: 1 },
-          },
-        };
+      if (locationData.results && locationData.results.length > 0) {
+        const residentsUrls = locationData.results[0].residents;
+        const ids = residentsUrls.map((url: string) => url.split("/").pop());
+
+        if (ids.length > 0) {
+          const charactersRes = await fetch(
+            `https://rickandmortyapi.com/api/character/${ids.join(",")}`
+          );
+          const charactersData = await charactersRes.json();
+
+          let filteredCharacters = Array.isArray(charactersData)
+            ? charactersData
+            : [charactersData];
+
+          // 🔍 Фільтрація за ім'ям, статусом, гендером
+          if (nameQuery) {
+            const name = Array.isArray(nameQuery) ? nameQuery[0] : nameQuery;
+            filteredCharacters = filteredCharacters.filter((char) =>
+              char.name.toLowerCase().includes(name.toLowerCase())
+            );
+          }
+          if (statusQuery) {
+            const status = Array.isArray(statusQuery)
+              ? statusQuery[0]
+              : statusQuery;
+            filteredCharacters = filteredCharacters.filter(
+              (char) => char.status.toLowerCase() === status.toLowerCase()
+            );
+          }
+          if (genderQuery) {
+            const gender = Array.isArray(genderQuery)
+              ? genderQuery[0]
+              : genderQuery;
+            filteredCharacters = filteredCharacters.filter(
+              (char) => char.gender.toLowerCase() === gender.toLowerCase()
+            );
+          }
+
+          // 🚨 Ось тут ми додаємо власну логіку пагінації!
+          const charactersPerPage = 20; // Кількість персонажів на сторінці
+          const totalCharacters = filteredCharacters.length;
+          const totalPages = Math.ceil(totalCharacters / charactersPerPage);
+          const currentPage = Number(pageQuery);
+
+          // Обрізаємо масив, щоб показати тільки персонажів поточної сторінки
+          const startIndex = (currentPage - 1) * charactersPerPage;
+          const endIndex = startIndex + charactersPerPage;
+          characters = filteredCharacters.slice(startIndex, endIndex);
+
+          // Оновлюємо об'єкт info для пагінації
+          info = {
+            pages: totalPages,
+            prev: currentPage > 1 ? "..." : null, // Використовуємо ... для відображення
+            next: currentPage < totalPages ? "..." : null,
+          };
+        }
+      } else {
+        characters = [];
       }
-      throw new Error(`HTTP error! status: ${res.status}`);
+    } else {
+      // Логіка, якщо локація не обрана (залишаємо без змін)
+      const res = await fetch(
+        `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}&gender=${genderQuery}`
+      );
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          return {
+            props: {
+              characters: [],
+              hasError: false,
+              info: { prev: null, next: null, pages: 1 },
+              locations,
+            },
+          };
+        }
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      characters = data.results || [];
+      info = data.info || { prev: null, next: null, pages: 1 };
     }
-
-    const data = await res.json();
-
-    return {
-      props: {
-        characters: data.results || [],
-        // Додатково передаємо об'єкт info з API, який містить посилання на наступну/попередню сторінки
-        info: data.info || { prev: null, next: null, pages: 1 },
-      },
-    };
   } catch (error) {
-    console.error("Error loading characters:", error);
-
-    return {
-      props: {
-        characters: [],
-        hasError: true,
-        info: { prev: null, next: null, pages: 1 },
-      },
-    };
+    console.error("Error loading data:", error);
+    hasError = true;
   }
+
+  return {
+    props: {
+      characters,
+      info,
+      locations,
+      hasError,
+    },
+  };
 }
 
 export default function Home({
   characters,
   hasError,
   info = { prev: null, next: null, pages: 1 },
+  locations = [],
 }: HomeProps) {
   const router = useRouter();
   const [name, setName] = useState((router.query.name as string) || "");
 
-  const [status, setStatus] = useState((router.query.status as string) || ""); // Новий стан для статусу
+  const [status, setStatus] = useState((router.query.status as string) || "");
+
+  const [gender, setGender] = useState((router.query.gender as string) || "");
+
+  const [location, setLocation] = useState(
+    (router.query.location as string) || ""
+  );
 
   const [debouncedName] = useDebounce(name, 500);
 
@@ -103,30 +323,58 @@ export default function Home({
       const params = new URLSearchParams();
       if (debouncedName) params.set("name", debouncedName);
       if (status) params.set("status", status);
+      if (gender) params.set("gender", gender);
+      if (location) params.set("location", location);
 
       // Завжди повертаємо на першу сторінку при зміні імені
       router.push(`/?${params.toString()}`);
     }
-  }, [debouncedName, status, router.isReady, router.query.name, router]);
+  }, [
+    debouncedName,
+    status,
+    gender,
+    location,
+    router.isReady,
+    router.query.name,
+    router,
+  ]);
 
   // useEffect для зміни статусу
   useEffect(() => {
     if (!router.isReady) return;
 
     // Перевіряємо, чи змінився статус
-    if (status !== (router.query.status || "")) {
+    if (
+      status !== (router.query.status || "") ||
+      gender !== (router.query.gender || "") ||
+      location !== (router.query.location || "")
+    ) {
       const params = new URLSearchParams();
       if (name) params.set("name", name);
       if (status) params.set("status", status);
+      if (gender) params.set("gender", gender);
+      if (location) params.set("location", location);
       router.push(`/?${params.toString()}`);
     }
-  }, [status, name, router.isReady, router.query.status, router]);
+  }, [
+    status,
+    name,
+    gender,
+    location,
+    router.isReady,
+    router.query.status,
+    router.query.gender,
+    router.query.location,
+    router,
+  ]);
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
     const params = new URLSearchParams();
     if (name) params.set("name", name);
     if (status) params.set("status", status);
+    if (gender) params.set("gender", gender);
+    if (location) params.set("location", location);
     // При сабміті завжди повертаємо на першу сторінку
     router.push(`/?${params.toString()}`);
   };
@@ -135,6 +383,8 @@ export default function Home({
     const params = new URLSearchParams();
     if (name) params.set("name", name);
     if (status) params.set("status", status);
+    if (gender) params.set("gender", gender);
+    if (location) params.set("location", location);
     params.set("page", pageNumber.toString());
     router.push(`/?${params.toString()}`);
   };
@@ -184,79 +434,64 @@ export default function Home({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main style={{ padding: "20px" }}>
+      <main className={styles.main}>
         {" "}
-        {/* Можете додати inline стилі для початку */}
-        <h1>Welcome to the Rick & Morty Character Viewer!</h1>
-        <form
-          className="search-form"
-          onSubmit={handleSearch}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "20px",
-          }}
-        >
-          {/* Контейнер для поля вводу та кнопки пошуку */}
-          <div style={{ position: "relative" }}>
+        <h1 className={styles.title}>
+          Welcome to the Rick & Morty Character Viewer!
+        </h1>
+        <form className={styles.form} onSubmit={handleSearch}>
+          <div className={styles.inputContainer}>
             <input
-              className="search-field"
+              className={styles.searchField}
               type="text"
               placeholder="Enter the name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              style={{
-                padding: "10px 40px 10px 10px", // Додаємо відступ справа для кнопки
-                fontSize: "16px",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
             />
-            <button
-              type="submit"
-              style={{
-                position: "absolute",
-                right: "0",
-                top: "0",
-                height: "100%", // Робимо кнопку висотою з інпут
-                padding: "0 10px",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-            >
+            <button className={styles.searchButton} type="submit">
               <SearchIcon style={{ width: "20px", height: "20px" }} />
             </button>
           </div>
 
-          {/* Випадаючий список для фільтрації за статусом */}
           <select
+            className={styles.select}
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            style={{
-              padding: "10px",
-              fontSize: "16px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
           >
             <option value="">All Statuses</option>
             <option value="alive">Alive</option>
             <option value="dead">Dead</option>
             <option value="unknown">Unknown</option>
           </select>
+
+          <select
+            className={styles.select}
+            value={gender}
+            onChange={(event) => setGender(event.target.value)}
+          >
+            <option value="">All Genders</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="genderless">Genderless</option>
+            <option value="unknown">Unknown</option>
+          </select>
+
+          <select
+            className={styles.select}
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+          >
+            <option value="">All Locations</option>
+            {locations.map((loc: string, index: number) => (
+              <option key={index} value={loc}>
+                {loc}
+              </option>
+            ))}
+          </select>
         </form>
-        {/* Тут код для відображення персонажів */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-            gap: "20px",
-            justifyItems: "center",
-          }}
-        >
+        <div className={styles.grid}>
           {hasError ? (
-            <p style={{ color: "red" }}>Failed to load characters.</p>
+            <p className={styles.error}>Failed to load characters.</p>
           ) : characters.length > 0 ? (
             characters.map((character) => (
               <CharacterCard
@@ -269,73 +504,36 @@ export default function Home({
               />
             ))
           ) : (
-            <p>No characters found.</p>
+            <p className={styles.noResults}>No characters found.</p>
           )}
         </div>
-        {/* Додаємо кнопки пагінації */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "10px",
-            marginTop: "20px",
-            padding: "0 20px",
-          }}
-        >
-          {/* Кнопка "Previous" */}
+        <div className={styles.pagination}>
           {info.prev && (
             <button
+              className={styles.paginationButton}
               onClick={() => handlePageChange(currentPage - 1)}
-              style={{
-                padding: "8px 16px", // Додаємо відступи
-                fontSize: "16px", // Збільшуємо розмір шрифту
-                cursor: "pointer", // Змінюємо курсор, щоб показати, що кнопка клікабельна
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                color: "black", // Додали колір тексту
-                backgroundColor: "white",
-              }}
             >
               &lt;
             </button>
           )}
 
-          {/* Кнопки для сторінок */}
           {pageNumbers.map((page, index) => (
             <button
-              key={index} // Використовуємо індекс для унікального ключа
+              key={index}
+              className={`${styles.paginationButton} ${
+                page === currentPage ? styles.paginationButtonActive : ""
+              }`}
+              disabled={page === "..."}
               onClick={() => handlePageChange(Number(page))}
-              style={{
-                padding: "8px 16px",
-                fontSize: "16px",
-                cursor: "pointer",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                backgroundColor: page === currentPage ? "#39719fff" : "white",
-                color: page === currentPage ? "white" : "black",
-                fontWeight: page === currentPage ? "bold" : "normal",
-                // Стилі для багатокрапок
-                pointerEvents: page === "..." ? "none" : "auto", // Робить багатокрапки неклікабельними
-                borderColor: page === "..." ? "transparent" : "#ccc",
-              }}
             >
               {page}
             </button>
           ))}
 
-          {/* Кнопка "Next" */}
           {info.next && (
             <button
+              className={styles.paginationButton}
               onClick={() => handlePageChange(currentPage + 1)}
-              style={{
-                padding: "8px 16px",
-                fontSize: "16px",
-                cursor: "pointer",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                color: "black", // Додали колір тексту
-                backgroundColor: "white",
-              }}
             >
               &gt;
             </button>

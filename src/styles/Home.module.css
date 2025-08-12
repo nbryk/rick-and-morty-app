@@ -1,4 +1,4 @@
-.page {
+/* .page {
   --gray-rgb: 0, 0, 0;
   --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
   --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
@@ -14,9 +14,9 @@
   padding: 80px;
   gap: 64px;
   font-family: var(--font-geist-sans);
-}
+} */
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;
     --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
@@ -25,16 +25,24 @@
     --button-primary-hover: #ccc;
     --button-secondary-hover: #1a1a1a;
   }
-}
+} */
 
 .main {
   display: flex;
   flex-direction: column;
   gap: 32px;
   grid-row-start: 2;
+  width: 100%; /* Додано для адаптивності */
+  padding: 20px;
 }
 
-.main ol {
+/* наші стилі */
+.title {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* .main ol {
   font-family: var(--font-geist-mono);
   padding-left: 0;
   margin: 0;
@@ -42,26 +50,34 @@
   line-height: 24px;
   letter-spacing: -0.01em;
   list-style-position: inside;
-}
+} */
 
-.main li:not(:last-of-type) {
+/* .main li:not(:last-of-type) {
   margin-bottom: 8px;
-}
+} */
 
-.main code {
+/* .main code {
   font-family: inherit;
   background: var(--gray-alpha-100);
   padding: 2px 4px;
   border-radius: 4px;
   font-weight: 600;
+} */
+
+.form {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.ctas {
+/* .ctas {
   display: flex;
   gap: 16px;
-}
+} */
 
-.ctas a {
+/* .ctas a {
   appearance: none;
   border-radius: 128px;
   height: 48px;
@@ -79,37 +95,118 @@
   font-size: 16px;
   line-height: 20px;
   font-weight: 500;
+} */
+
+.inputContainer {
+  position: relative;
+  max-width: 300px;
 }
 
-a.primary {
+/* a.primary {
   background: var(--foreground);
   color: var(--background);
   gap: 8px;
-}
+} */
 
-a.secondary {
+/* a.secondary {
   border-color: var(--gray-alpha-200);
   min-width: 158px;
+} */
+
+.searchField {
+  padding: 10px 40px 10px 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.footer {
+.searchButton {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.select {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  /* width: 100%; */
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  justify-items: center;
+}
+
+/* .footer {
   grid-row-start: 3;
   display: flex;
   gap: 24px;
-}
+} */
 
-.footer a {
+/* .footer a {
   display: flex;
   align-items: center;
   gap: 8px;
+} */
+
+/* .footer img {
+  flex-shrink: 0;
+} */
+
+.error {
+  color: red;
 }
 
-.footer img {
-  flex-shrink: 0;
+.noResults {
+  text-align: center;
+  font-size: 18px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+
+.paginationButton {
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: black;
+  background-color: white;
+}
+
+.paginationButtonActive {
+  background-color: #39719fff;
+  color: white;
+  font-weight: bold;
+}
+
+.paginationButton[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
+/* @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
     background: var(--button-primary-hover);
     border-color: transparent;
@@ -124,7 +221,7 @@ a.secondary {
     text-decoration: underline;
     text-underline-offset: 4px;
   }
-}
+} */
 
 @media (max-width: 600px) {
   .page {
@@ -136,33 +233,33 @@ a.secondary {
     align-items: center;
   }
 
-  .main ol {
+  /* .main ol {
     text-align: center;
-  }
+  } */
 
-  .ctas {
+  /* .ctas {
     flex-direction: column;
-  }
+  } */
 
-  .ctas a {
+  /* .ctas a {
     font-size: 14px;
     height: 40px;
     padding: 0 16px;
-  }
+  } */
 
-  a.secondary {
+  /* a.secondary {
     min-width: auto;
-  }
+  } */
 
-  .footer {
+  /* .footer {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-  }
+  } */
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   .logo {
     filter: invert();
   }
-}
+} */

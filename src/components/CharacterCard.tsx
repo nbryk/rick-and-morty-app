@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import styles from "@/styles/CharacterCard.module.css";
+
 interface CharacterProps {
   id: number;
   name: string;
@@ -16,40 +18,36 @@ const CharacterCard: React.FC<CharacterProps> = ({
   species,
   status,
 }) => {
-  return (
-    // Використовуємо компонент Link і вказуємо шлях
-    <Link href={`/character/${id}`}>
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "15px",
-          margin: "10px",
-          borderRadius: "8px",
-          width: "200px", // Фіксована ширина
-          height: "320px", // Фіксована висота
-          // maxWidth: "200px",
-          textAlign: "center",
+  const statusClassName =
+    {
+      alive: styles.statusAlive,
+      dead: styles.statusDead,
+      unknown: styles.statusUnknown,
+    }[status.toLowerCase()] || styles.statusUnknown;
 
-          // Додаємо Flexbox для вирівнювання контенту
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
+  return (
+    <Link href={`/character/${id}`}>
+      <div className={styles.card}>
         <div>
           <Image
             src={image}
             alt={name}
-            width={150} // Оберіть відповідні розміри
-            height={150}
-            style={{ borderRadius: "50%", marginBottom: "10px" }}
+            width={160}
+            height={160}
+            className={styles.image}
           />
-          <h2>{name}</h2>
+          <h2 className={styles.name}>{name}</h2>
         </div>
 
-        <div>
+        <div className={styles.details}>
           <p>Species: {species}</p>
-          <p>Status: {status}</p>
+          <p className={styles.statusSpecies}>
+            <span
+              className={`${styles.statusIcon} ${statusClassName || ""}`}
+            ></span>{" "}
+            {/* Виправлення тут */}
+            Status: {status}
+          </p>
           {/* Можете додати посилання на детальну сторінку тут пізніше */}
         </div>
       </div>
