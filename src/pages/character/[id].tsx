@@ -2,9 +2,10 @@ import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
 import Image from "next/image";
 
-import { useRouter } from "next/router"; // Імпортуємо useRouter
+import { useRouter } from "next/router";
 
-// Інтерфейс для даних персонажа
+import styles from "@/styles/CharacterDetails.module.css";
+
 interface Character {
   id: number;
   name: string;
@@ -21,15 +22,15 @@ interface CharacterDetailsProps {
   character: Character;
 }
 
-// Тут будемо робити запит до API та відображати інформацію про персонажа
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as { id: string };
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   try {
-    const res = await fetch(`https://rickandmortyapi.com/api/character/${id}`);
+    const res = await fetch(`${API_URL}/character/${id}`);
 
     if (!res.ok) {
-      // Якщо персонаж не знайдений, повертаємо 404 сторінку
       return { notFound: true };
     }
 
@@ -47,7 +48,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 export default function CharacterDetails({ character }: CharacterDetailsProps) {
-  const router = useRouter(); // Ініціалізуємо хук useRouter
+  const router = useRouter();
+
+  const details = [
+    { label: "Status", value: character.status },
+    { label: "Species", value: character.species },
+    { label: "Gender", value: character.gender },
+    { label: "Origin", value: character.origin.name },
+    { label: "Location", value: character.location.name },
+    { label: "Episodes", value: character.episode.length },
+  ];
 
   return (
     <>
@@ -55,52 +65,27 @@ export default function CharacterDetails({ character }: CharacterDetailsProps) {
         <title>{character.name} - Rick & Morty</title>
       </Head>
 
-      <div style={{ padding: "20px" }}>
-        {/* Додаємо кнопку "Назад" */}
-        <button
-          onClick={() => router.back()} // Використовуємо router.back() для повернення
-          style={{
-            padding: "8px 16px",
-            fontSize: "16px",
-            cursor: "pointer",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            backgroundColor: "white",
-            color: "black",
-            marginBottom: "20px",
-          }}
-        >
+      <div className={styles.container}>
+        <button onClick={() => router.back()} className={styles.goBackButton}>
           &lt; Go Back
         </button>
 
-        <div style={{ textAlign: "center" }}>
-          <h1 style={{ marginBottom: "20px" }}>{character.name}</h1>
+        <div className={styles.characterInfo}>
+          <h1 className={styles.characterName}>{character.name}</h1>
           <Image
             src={character.image}
             alt={character.name}
             width={300}
             height={300}
-            style={{ borderRadius: "8px" }}
+            className={styles.characterImg}
+            priority
           />
-          <div style={{ marginTop: "20px", fontSize: "18px" }}>
-            <p>
-              <strong>Status:</strong> {character.status}
-            </p>
-            <p>
-              <strong>Species:</strong> {character.species}
-            </p>
-            <p>
-              <strong>Gender:</strong> {character.gender}
-            </p>
-            <p>
-              <strong>Origin:</strong> {character.origin.name}
-            </p>
-            <p>
-              <strong>Location:</strong> {character.location.name}
-            </p>
-            <p>
-              <strong>Episodes:</strong> {character.episode.length}
-            </p>
+          <div className={styles.characterDescription}>
+            {details.map((item) => (
+              <p key={item.label}>
+                <strong>{item.label}:</strong> {item.value}
+              </p>
+            ))}
           </div>
         </div>
       </div>

@@ -11,7 +11,6 @@ import { useDebounce } from "use-debounce";
 
 import styles from "@/styles/Home.module.css";
 
-// Типизація персонажа залишається такою ж
 interface Character {
   id: number;
   name: string;
@@ -23,152 +22,16 @@ interface Character {
 interface Info {
   next: string | null;
   prev: string | null;
-  pages: number; // Додаємо загальну кількість сторінок
+  pages: number;
 }
 
 interface HomeProps {
   characters: Character[];
-  info: Info; // Додаємо інформацію про пагінацію
+  info: Info;
   hasError?: boolean;
   locations: string[];
 }
 
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   const { query } = context;
-
-//   const nameQuery = query.name || "";
-//   const pageQuery = query.page || "1";
-//   const statusQuery = query.status || "";
-//   const genderQuery = query.gender || "";
-//   const locationQuery = query.location || "";
-
-//   const locationsRes = await fetch("https://rickandmortyapi.com/api/location");
-//   const locationsData = await locationsRes.json();
-//   const locations = locationsData.results.map(
-//     (loc: { name: string }) => loc.name
-//   );
-
-//   if (locationQuery) {
-//     const locationRes = await fetch(
-//       `https://rickandmortyapi.com/api/location/?name=${locationQuery}`
-//     );
-
-//     const locationData = await locationRes.json();
-
-//     if (locationData.results && locationData.results.length > 0) {
-//       const residentsUrls = locationData.results[0].residents;
-//       // const ids = residentsUrls
-//       //   .map((url: string) => url.split("/").pop())
-//       //   .slice(0, 20); // перші 20 персонажів
-
-//       const ids = residentsUrls
-//         .map((url: string) => url.split("/").pop())
-//         .slice(0);
-
-//       const charactersRes = await fetch(
-//         `https://rickandmortyapi.com/api/character/${ids.join(",")}`
-//       );
-
-//       const charactersData = await charactersRes.json();
-
-//       let filteredCharacters = Array.isArray(charactersData)
-//         ? charactersData
-//         : [charactersData];
-
-//       // 🔍 Фільтрація за ім'ям
-//       if (nameQuery) {
-//         filteredCharacters = filteredCharacters.filter((char) =>
-//           char.name.toLowerCase().includes((nameQuery as string).toLowerCase())
-//         );
-//       }
-
-//       // 🔍 Фільтрація за статусом
-//       if (statusQuery) {
-//         filteredCharacters = filteredCharacters.filter(
-//           (char) =>
-//             char.status.toLowerCase() === (statusQuery as string).toLowerCase()
-//         );
-//       }
-
-//       // 🔍 Фільтрація за гендером
-//       if (genderQuery) {
-//         filteredCharacters = filteredCharacters.filter(
-//           (char) =>
-//             char.gender.toLowerCase() === (genderQuery as string).toLowerCase()
-//         );
-//       }
-
-//       return {
-//         props: {
-//           characters: filteredCharacters,
-//           info: { prev: null, next: null, pages: 1 },
-//           locations,
-//         },
-//       };
-//     } else {
-//       return {
-//         props: {
-//           characters: [],
-//           info: { prev: null, next: null, pages: 1 },
-//           locations,
-//           hasError: false,
-//         },
-//       };
-//     }
-//   }
-
-//   try {
-//     const res = await fetch(
-//       `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}&gender=${genderQuery}`
-//     );
-
-//     // Запит для локацій
-//     // const locationsRes = await fetch(
-//     //   "https://rickandmortyapi.com/api/location"
-//     // );
-
-//     if (!res.ok) {
-//       if (res.status === 404) {
-//         return {
-//           props: {
-//             characters: [],
-//             hasError: false,
-//             info: { prev: null, next: null, pages: 1 },
-//             locations: [],
-//           },
-//         };
-//       }
-//       throw new Error(`HTTP error! status: ${res.status}`);
-//     }
-
-//     const data = await res.json();
-//     //const locationsData = await locationsRes.json();
-
-//     // Витягуємо назви локацій та перетворюємо в масив рядків
-//     // const locations = locationsData.results.map(
-//     //   (loc: { name: string }) => loc.name
-//     // );
-
-//     return {
-//       props: {
-//         characters: data.results || [],
-//         info: data.info || { prev: null, next: null, pages: 1 },
-//         locations: locations,
-//       },
-//     };
-//   } catch (error) {
-//     console.error("Error loading characters:", error);
-
-//     return {
-//       props: {
-//         characters: [],
-//         hasError: true,
-//         info: { prev: null, next: null, pages: 1 },
-//         locations: [],
-//       },
-//     };
-//   }
-// }
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
 
@@ -178,7 +41,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const genderQuery = query.gender || "";
   const locationQuery = query.location || "";
 
-  // ... (запит на локації без змін) ...
   const locationsRes = await fetch("https://rickandmortyapi.com/api/location");
   const locationsData = await locationsRes.json();
   const locations = locationsData.results.map(
@@ -210,7 +72,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             ? charactersData
             : [charactersData];
 
-          // 🔍 Фільтрація за ім'ям, статусом, гендером
           if (nameQuery) {
             const name = Array.isArray(nameQuery) ? nameQuery[0] : nameQuery;
             filteredCharacters = filteredCharacters.filter((char) =>
@@ -234,21 +95,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             );
           }
 
-          // 🚨 Ось тут ми додаємо власну логіку пагінації!
-          const charactersPerPage = 20; // Кількість персонажів на сторінці
+          const charactersPerPage = 20;
           const totalCharacters = filteredCharacters.length;
           const totalPages = Math.ceil(totalCharacters / charactersPerPage);
           const currentPage = Number(pageQuery);
 
-          // Обрізаємо масив, щоб показати тільки персонажів поточної сторінки
           const startIndex = (currentPage - 1) * charactersPerPage;
           const endIndex = startIndex + charactersPerPage;
           characters = filteredCharacters.slice(startIndex, endIndex);
 
-          // Оновлюємо об'єкт info для пагінації
           info = {
             pages: totalPages,
-            prev: currentPage > 1 ? "..." : null, // Використовуємо ... для відображення
+            prev: currentPage > 1 ? "..." : null,
             next: currentPage < totalPages ? "..." : null,
           };
         }
@@ -256,7 +114,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         characters = [];
       }
     } else {
-      // Логіка, якщо локація не обрана (залишаємо без змін)
       const res = await fetch(
         `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}&gender=${genderQuery}`
       );
@@ -313,12 +170,9 @@ export default function Home({
 
   const [debouncedName] = useDebounce(name, 500);
 
-  // useEffect для debounce-пошуку
   useEffect(() => {
-    // Не робимо нічого при першому завантаженні
     if (!router.isReady) return;
 
-    // Перевіряємо, чи змінилось ім'я, щоб уникнути циклу
     if (debouncedName !== (router.query.name || "")) {
       const params = new URLSearchParams();
       if (debouncedName) params.set("name", debouncedName);
@@ -326,7 +180,6 @@ export default function Home({
       if (gender) params.set("gender", gender);
       if (location) params.set("location", location);
 
-      // Завжди повертаємо на першу сторінку при зміні імені
       router.push(`/?${params.toString()}`);
     }
   }, [
@@ -339,11 +192,9 @@ export default function Home({
     router,
   ]);
 
-  // useEffect для зміни статусу
   useEffect(() => {
     if (!router.isReady) return;
 
-    // Перевіряємо, чи змінився статус
     if (
       status !== (router.query.status || "") ||
       gender !== (router.query.gender || "") ||
@@ -375,7 +226,7 @@ export default function Home({
     if (status) params.set("status", status);
     if (gender) params.set("gender", gender);
     if (location) params.set("location", location);
-    // При сабміті завжди повертаємо на першу сторінку
+
     router.push(`/?${params.toString()}`);
   };
 
@@ -407,17 +258,14 @@ export default function Home({
     }
   }
 
-  // Додаємо багатокрапки, якщо потрібно
   if (startPage > 1) {
     pageNumbers.push("...");
   }
 
-  // Додаємо сторінки з діапазону
   for (let i = startPage; i <= endPage; i++) {
     pageNumbers.push(i);
   }
 
-  // Додаємо багатокрапки, якщо потрібно
   if (endPage < totalPages) {
     pageNumbers.push("...");
   }

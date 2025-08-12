@@ -5,9 +5,7 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  /* width: 200px; */
   height: 320px;
-  /* max-width: 200px; */
   text-align: center;
   max-width: 200px;
   width: 100%;
@@ -18,10 +16,9 @@
   justify-content: space-between;
 }
 
-/* Медіа-запит для маленьких екранів */
 @media (max-width: 600px) {
   .card {
-    width: 250px; /* Забираємо обмеження, щоб картка могла розтягнутись */
+    width: 250px;
   }
 }
 
@@ -41,7 +38,6 @@
 }
 
 .details {
-  /* Клас для div, що обгортає деталі */
   margin-top: 10px;
 }
 
@@ -70,42 +66,3 @@
 .statusUnknown {
   background-color: gray;
 }
-
-/* .content {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.name {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.statusSpecies {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-.statusIcon {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.statusAlive {
-  background-color: green;
-}
-
-.statusDead {
-  background-color: red;
-}
-
-.statusUnknown {
-  background-color: gray;
-} */
