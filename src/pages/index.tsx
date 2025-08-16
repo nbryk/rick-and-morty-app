@@ -1,3 +1,4 @@
+import { Character, HomeProps, Info } from "@/types";
 import Head from "next/head";
 import CharacterCard from "@/components/CharacterCard";
 import { useEffect, useState } from "react";
@@ -10,27 +11,11 @@ import { FormEvent } from "react";
 import { useDebounce } from "use-debounce";
 
 import styles from "@/styles/Home.module.css";
-
-interface Character {
-  id: number;
-  name: string;
-  status: string;
-  species: string;
-  image: string;
-}
-
-interface Info {
-  next: string | null;
-  prev: string | null;
-  pages: number;
-}
-
-interface HomeProps {
-  characters: Character[];
-  info: Info;
-  hasError?: boolean;
-  locations: string[];
-}
+import {
+  fetchCharactersByLocation,
+  fetchCharactersByQuery,
+} from "@/api/characters";
+import { getPageNumbers } from "@/utils/pagination";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -53,88 +38,24 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     if (locationQuery) {
-      const locationRes = await fetch(
-        `https://rickandmortyapi.com/api/location/?name=${locationQuery}`
-      );
-      const locationData = await locationRes.json();
-
-      if (locationData.results && locationData.results.length > 0) {
-        const residentsUrls = locationData.results[0].residents;
-        const ids = residentsUrls.map((url: string) => url.split("/").pop());
-
-        if (ids.length > 0) {
-          const charactersRes = await fetch(
-            `https://rickandmortyapi.com/api/character/${ids.join(",")}`
-          );
-          const charactersData = await charactersRes.json();
-
-          let filteredCharacters = Array.isArray(charactersData)
-            ? charactersData
-            : [charactersData];
-
-          if (nameQuery) {
-            const name = Array.isArray(nameQuery) ? nameQuery[0] : nameQuery;
-            filteredCharacters = filteredCharacters.filter((char) =>
-              char.name.toLowerCase().includes(name.toLowerCase())
-            );
-          }
-          if (statusQuery) {
-            const status = Array.isArray(statusQuery)
-              ? statusQuery[0]
-              : statusQuery;
-            filteredCharacters = filteredCharacters.filter(
-              (char) => char.status.toLowerCase() === status.toLowerCase()
-            );
-          }
-          if (genderQuery) {
-            const gender = Array.isArray(genderQuery)
-              ? genderQuery[0]
-              : genderQuery;
-            filteredCharacters = filteredCharacters.filter(
-              (char) => char.gender.toLowerCase() === gender.toLowerCase()
-            );
-          }
-
-          const charactersPerPage = 20;
-          const totalCharacters = filteredCharacters.length;
-          const totalPages = Math.ceil(totalCharacters / charactersPerPage);
-          const currentPage = Number(pageQuery);
-
-          const startIndex = (currentPage - 1) * charactersPerPage;
-          const endIndex = startIndex + charactersPerPage;
-          characters = filteredCharacters.slice(startIndex, endIndex);
-
-          info = {
-            pages: totalPages,
-            prev: currentPage > 1 ? "..." : null,
-            next: currentPage < totalPages ? "..." : null,
-          };
-        }
-      } else {
-        characters = [];
-      }
+      const result = await fetchCharactersByLocation({
+        locationQuery,
+        nameQuery,
+        statusQuery,
+        genderQuery,
+        pageQuery,
+      });
+      characters = result.characters;
+      info = result.info;
     } else {
-      const res = await fetch(
-        `https://rickandmortyapi.com/api/character?name=${nameQuery}&page=${pageQuery}&status=${statusQuery}&gender=${genderQuery}`
-      );
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          return {
-            props: {
-              characters: [],
-              hasError: false,
-              info: { prev: null, next: null, pages: 1 },
-              locations,
-            },
-          };
-        }
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      characters = data.results || [];
-      info = data.info || { prev: null, next: null, pages: 1 };
+      const result = await fetchCharactersByQuery({
+        nameQuery,
+        pageQuery,
+        statusQuery,
+        genderQuery,
+      });
+      characters = result.characters;
+      info = result.info;
     }
   } catch (error) {
     console.error("Error loading data:", error);
@@ -243,32 +164,7 @@ export default function Home({
   const currentPage = Number(router.query.page) || 1;
   const totalPages = info.pages;
 
-  const pageNumbers = [];
-  const maxPagesToShow = 5;
-  const half = Math.floor(maxPagesToShow / 2);
-
-  let startPage = Math.max(1, currentPage - half);
-  let endPage = Math.min(totalPages, currentPage + half);
-
-  if (endPage - startPage + 1 < maxPagesToShow) {
-    if (startPage === 1) {
-      endPage = Math.min(totalPages, maxPagesToShow);
-    } else if (endPage === totalPages) {
-      startPage = Math.max(1, totalPages - maxPagesToShow + 1);
-    }
-  }
-
-  if (startPage > 1) {
-    pageNumbers.push("...");
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pageNumbers.push(i);
-  }
-
-  if (endPage < totalPages) {
-    pageNumbers.push("...");
-  }
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
     <>
