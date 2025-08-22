@@ -26,50 +26,66 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const genderQuery = query.gender || "";
   const locationQuery = query.location || "";
 
-  const locationsRes = await fetch("https://rickandmortyapi.com/api/location");
-  const locationsData = await locationsRes.json();
-  const locations = locationsData.results.map(
-    (loc: { name: string }) => loc.name
-  );
-
-  let characters: Character[] = [];
-  let info: Info = { prev: null, next: null, pages: 1 };
-  let hasError = false;
+  const params = {
+    nameQuery,
+    pageQuery,
+    statusQuery,
+    genderQuery,
+  };
 
   try {
-    if (locationQuery) {
-      const result = await fetchCharactersByLocation({
-        locationQuery,
-        nameQuery,
-        statusQuery,
-        genderQuery,
-        pageQuery,
-      });
-      characters = result.characters;
-      info = result.info;
-    } else {
-      const result = await fetchCharactersByQuery({
-        nameQuery,
-        pageQuery,
-        statusQuery,
-        genderQuery,
-      });
-      characters = result.characters;
-      info = result.info;
-    }
+    const locationsPromise = fetch("https://rickandmortyapi.com/api/location");
+    const charactersPromise = locationQuery
+      ? fetchCharactersByLocation({ ...params, locationQuery })
+      : fetchCharactersByQuery(params);
+
+    const [locationsRes, charactersRes] = await Promise.all([
+      locationsPromise,
+      charactersPromise,
+    ]);
+
+    const locationsData = await locationsRes.json();
+    const locations = locationsData.results.map(
+      (loc: { name: string }) => loc.name
+    );
+
+    const { characters, info } = charactersRes;
+
+    return {
+      props: {
+        characters,
+        info,
+        locations,
+        hasError: false,
+      },
+    };
   } catch (error) {
     console.error("Error loading data:", error);
-    hasError = true;
+    return {
+      props: {
+        characters: [],
+        info: { prev: null, next: null, pages: 1 },
+        locations: [],
+        hasError: true,
+      },
+    };
   }
+}
 
-  return {
-    props: {
-      characters,
-      info,
-      locations,
-      hasError,
-    },
-  };
+function createSearchParams(
+  name: string,
+  status: string,
+  gender: string,
+  location: string,
+  page?: number
+) {
+  const params = new URLSearchParams();
+  if (name) params.set("name", name);
+  if (status) params.set("status", status);
+  if (gender) params.set("gender", gender);
+  if (location) params.set("location", location);
+  if (page) params.set("page", page.toString());
+  return params.toString();
 }
 
 export default function Home({
@@ -121,12 +137,8 @@ export default function Home({
       gender !== (router.query.gender || "") ||
       location !== (router.query.location || "")
     ) {
-      const params = new URLSearchParams();
-      if (name) params.set("name", name);
-      if (status) params.set("status", status);
-      if (gender) params.set("gender", gender);
-      if (location) params.set("location", location);
-      router.push(`/?${params.toString()}`);
+      const newQuery = createSearchParams(name, status, gender, location);
+      router.push(`/?${newQuery}`);
     }
   }, [
     status,
@@ -142,23 +154,19 @@ export default function Home({
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    const params = new URLSearchParams();
-    if (name) params.set("name", name);
-    if (status) params.set("status", status);
-    if (gender) params.set("gender", gender);
-    if (location) params.set("location", location);
-
-    router.push(`/?${params.toString()}`);
+    const newQuery = createSearchParams(name, status, gender, location);
+    router.push(`/?${newQuery}`);
   };
 
   const handlePageChange = (pageNumber: number) => {
-    const params = new URLSearchParams();
-    if (name) params.set("name", name);
-    if (status) params.set("status", status);
-    if (gender) params.set("gender", gender);
-    if (location) params.set("location", location);
-    params.set("page", pageNumber.toString());
-    router.push(`/?${params.toString()}`);
+    const newQuery = createSearchParams(
+      name,
+      status,
+      gender,
+      location,
+      pageNumber
+    );
+    router.push(`/?${newQuery}`);
   };
 
   const currentPage = Number(router.query.page) || 1;
